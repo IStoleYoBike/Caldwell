@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caldwell Sales Tracker · 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a08;
+  --surface: #111110;
+  --card: #171714;
+  --card2: #1c1c19;
+  --border: #272722;
+  --border2: #333330;
+  --gold: #d4a843;
+  --gold-lt: #e8c46a;
+  --gold-dk: #8a6c28;
+  --gold-glow: rgba(212,168,67,0.1);
+  --gold-glow2: rgba(212,168,67,0.05);
+  --green: #52a870;
+  --green-dim: rgba(82,168,112,0.12);
+  --red: #c45c5c;
+  --red-dim: rgba(196,92,92,0.12);
+  --amber: #d4854a;
+  --amber-dim: rgba(212,133,74,0.12);
+  --text: #e2d9c8;
+  --text2: #9a9080;
+  --text3: #5a5548;
+  --mono: 'JetBrains Mono', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Archivo',sans-serif; font-size:14px; line-height:1.5; min-height:100vh; }
+
+/* ── SETUP BANNER ── */
+#setup-banner { background:linear-gradient(135deg,#1a1500,#0f1a00); border-bottom:1px solid var(--gold-dk); padding:14px 24px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+#setup-banner.hidden { display:none; }
+.setup-dot { width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+.setup-text { font-size:13px;color:var(--gold-lt);flex:1; }
+.setup-text a { color:var(--gold);text-decoration:underline;cursor:pointer; }
+.setup-input-row { display:flex;gap:8px;align-items:center;flex-wrap:wrap; }
+.setup-input { background:rgba(0,0,0,0.4);border:1px solid var(--gold-dk);color:var(--text);font-family:var(--mono);font-size:11px;padding:6px 10px;border-radius:3px;width:340px;outline:none; }
+.setup-input:focus { border-color:var(--gold); }
+.setup-input::placeholder { color:var(--text3); }
+.btn-setup { background:var(--gold);color:#0a0a08;border:none;padding:6px 14px;font-family:'Archivo Black',sans-serif;font-size:11px;letter-spacing:1px;border-radius:3px;cursor:pointer;white-space:nowrap; }
+.btn-setup:hover { background:var(--gold-lt); }
+
+/* ── TOPBAR ── */
+.topbar { background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:50;gap:16px; }
+.logo { font-family:'Archivo Black',sans-serif;font-size:15px;letter-spacing:2px;color:var(--gold);white-space:nowrap; }
+.logo sup { font-size:9px;color:var(--text2);letter-spacing:1px; }
+.nav { display:flex;gap:2px;overflow-x:auto; }
+.nav-btn { background:none;border:1px solid transparent;color:var(--text2);font-family:'Archivo',sans-serif;font-size:12px;font-weight:500;padding:5px 14px;border-radius:3px;cursor:pointer;white-space:nowrap;transition:all 0.15s;letter-spacing:0.3px; }
+.nav-btn:hover { color:var(--text);border-color:var(--border); }
+.nav-btn.active { background:var(--gold-glow);border-color:var(--gold-dk);color:var(--gold); }
+.sync-status { font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap;display:flex;align-items:center;gap:6px; }
+.sync-dot { width:6px;height:6px;border-radius:50%;background:var(--text3); }
+.sync-dot.ok { background:var(--green); }
+.sync-dot.loading { background:var(--gold);animation:pulse 1s infinite; }
+.sync-dot.err { background:var(--red); }
+
+/* ── LAYOUT ── */
+.page { display:none;padding:24px;max-width:1380px;margin:0 auto; }
+.page.active { display:block; }
+
+/* ── CARDS ── */
+.card { background:var(--card);border:1px solid var(--border);border-radius:5px;padding:20px; }
+.card-hd { font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:14px; }
+
+/* ── GRIDS ── */
+.g4 { display:grid;grid-template-columns:repeat(4,1fr);gap:12px; }
+.g3 { display:grid;grid-template-columns:repeat(3,1fr);gap:12px; }
+.g2 { display:grid;grid-template-columns:repeat(2,1fr);gap:12px; }
+@media(max-width:900px){.g4,.g3{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
+@media(max-width:520px){.g4{grid-template-columns:repeat(2,1fr)}}
+
+/* ── KPI ── */
+.kpi-val { font-family:'Archivo Black',sans-serif;font-size:32px;color:var(--gold);line-height:1;letter-spacing:-0.5px; }
+.kpi-lbl { font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-top:5px; }
+.kpi-sub { font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:5px; }
+
+/* ── PROGRESS ── */
+.prog { margin-top:10px; }
+.prog-row { display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:4px;font-family:var(--mono); }
+.prog-track { height:4px;background:var(--border2);border-radius:2px;overflow:hidden; }
+.prog-fill { height:100%;border-radius:2px;transition:width .5s ease; }
+.fill-gold { background:linear-gradient(90deg,var(--gold-dk),var(--gold)); }
+.fill-green { background:var(--green); }
+.fill-red { background:var(--red); }
+.fill-amber { background:var(--amber); }
+.fill-dim { background:var(--border2); }
+
+/* ── SECTION HEADER ── */
+.sec { display:flex;align-items:center;gap:12px;margin:26px 0 14px; }
+.sec-title { font-family:'Archivo Black',sans-serif;font-size:15px;letter-spacing:1.5px;white-space:nowrap; }
+.sec-line { flex:1;height:1px;background:var(--border); }
+.sec-action { background:var(--gold-glow);border:1px solid var(--gold-dk);color:var(--gold);font-family:'Archivo',sans-serif;font-size:11px;font-weight:600;padding:5px 14px;border-radius:3px;cursor:pointer;white-space:nowrap;transition:all 0.15s; }
+.sec-action:hover { background:var(--gold-glow2); }
+
+/* ── TABLES ── */
+.tbl-wrap { overflow-x:auto;-webkit-overflow-scrolling:touch; }
+table { width:100%;border-collapse:collapse; }
+th { font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap; }
+td { padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.03);font-size:13px;vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(255,255,255,0.015); }
+.num { font-family:var(--mono);font-size:12px;text-align:right; }
+.muted { color:var(--text2); }
+
+/* ── BADGES ── */
+.badge { display:inline-block;padding:2px 7px;border-radius:2px;font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;white-space:nowrap; }
+.b-gold { background:var(--gold-glow);color:var(--gold);border:1px solid var(--gold-dk); }
+.b-green { background:var(--green-dim);color:var(--green);border:1px solid rgba(82,168,112,0.3); }
+.b-red { background:var(--red-dim);color:var(--red);border:1px solid rgba(196,92,92,0.3); }
+.b-amber { background:var(--amber-dim);color:var(--amber);border:1px solid rgba(212,133,74,0.3); }
+.b-gray { background:rgba(255,255,255,0.04);color:var(--text2);border:1px solid var(--border2); }
+.b-new { background:rgba(82,168,112,0.15);color:var(--green);border:1px solid rgba(82,168,112,0.4); }
+
+/* ── BAR CHART ── */
+.bar-chart { display:flex;gap:6px;align-items:flex-end;height:110px;padding-bottom:2px; }
+.bar-col { flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end; }
+.bar-stack { width:100%;flex:1;position:relative;display:flex;flex-direction:column;justify-content:flex-end; }
+.bar-tgt { position:absolute;bottom:0;left:0;right:0;background:var(--border2);border-radius:2px 2px 0 0; }
+.bar-act { position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,var(--gold-lt),var(--gold-dk));border-radius:2px 2px 0 0;z-index:1; }
+.bar-lbl { font-family:var(--mono);font-size:8px;color:var(--text3); }
+
+/* ── ACCOUNT SEARCH DROPDOWN ── */
+.acct-search-wrap { position:relative; }
+.acct-search-input { width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:'Archivo',sans-serif;font-size:13px;padding:8px 12px;border-radius:3px;outline:none;transition:border-color .15s; }
+.acct-search-input:focus { border-color:var(--gold-dk); }
+.acct-search-input::placeholder { color:var(--text3); }
+.acct-dropdown { position:absolute;top:100%;left:0;right:0;background:var(--card2);border:1px solid var(--border2);border-top:none;border-radius:0 0 4px 4px;z-index:100;max-height:200px;overflow-y:auto;display:none; }
+.acct-dropdown.open { display:block; }
+.acct-opt { padding:9px 12px;cursor:pointer;font-size:13px;transition:background .1s;display:flex;justify-content:space-between;align-items:center; }
+.acct-opt:hover { background:rgba(255,255,255,0.05); }
+.acct-opt-meta { font-family:var(--mono);font-size:10px;color:var(--text3); }
+.acct-opt-new { padding:9px 12px;cursor:pointer;font-size:12px;color:var(--gold);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px; }
+.acct-opt-new:hover { background:var(--gold-glow); }
+#o-acct-hidden { display:none; }
+
+/* ── MODAL ── */
+.modal-bg { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:200;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto; }
+.modal-bg.open { display:flex; }
+.modal { background:var(--card);border:1px solid var(--border2);border-radius:6px;padding:28px;width:100%;max-width:520px;margin:auto;animation:slideUp .2s ease; }
+.modal-lg { max-width:620px; }
+@keyframes slideUp { from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1} }
+.modal-title { font-family:'Archivo Black',sans-serif;font-size:16px;letter-spacing:1px;color:var(--gold);margin-bottom:6px; }
+.modal-sub { font-size:12px;color:var(--text2);margin-bottom:22px; }
+.form-group { margin-bottom:14px; }
+.form-label { display:block;font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:5px; }
+.form-label span { color:var(--red);margin-left:2px; }
+.form-input,.form-select,.form-textarea { width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--text);font-family:'Archivo',sans-serif;font-size:13px;padding:8px 12px;border-radius:3px;outline:none;transition:border-color .15s; }
+.form-input:focus,.form-select:focus,.form-textarea:focus { border-color:var(--gold-dk); }
+.form-input::placeholder,.form-textarea::placeholder { color:var(--text3); }
+.form-select option { background:var(--card2); }
+.form-textarea { resize:vertical;min-height:70px; }
+.form-row { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+.form-row3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px; }
+@media(max-width:500px){.form-row,.form-row3{grid-template-columns:1fr}}
+.modal-actions { display:flex;gap:10px;justify-content:flex-end;margin-top:22px; }
+.btn-cancel { background:none;border:1px solid var(--border2);color:var(--text2);font-family:'Archivo',sans-serif;font-size:12px;font-weight:500;padding:8px 16px;border-radius:3px;cursor:pointer; }
+.btn-cancel:hover { border-color:var(--text2);color:var(--text); }
+.btn-save { background:var(--gold);border:none;color:#0a0a08;font-family:'Archivo Black',sans-serif;font-size:12px;letter-spacing:1px;padding:8px 20px;border-radius:3px;cursor:pointer; }
+.btn-save:hover { background:var(--gold-lt); }
+.btn-save:disabled { opacity:.5;cursor:not-allowed; }
+.btn-danger { background:var(--red-dim);border:1px solid rgba(196,92,92,0.3);color:var(--red);font-family:'Archivo',sans-serif;font-size:12px;font-weight:500;padding:8px 16px;border-radius:3px;cursor:pointer;margin-right:auto; }
+
+/* ── INLINE "NEW ACCOUNT" CALLOUT ── */
+.new-acct-callout { background:rgba(82,168,112,0.07);border:1px solid rgba(82,168,112,0.25);border-radius:4px;padding:14px 16px;margin-bottom:14px;display:none; }
+.new-acct-callout.open { display:block; }
+.new-acct-callout-title { font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--green);margin-bottom:12px;text-transform:uppercase; }
+
+/* ── ACCT PACING BAR ── */
+.acct-pct-bar { height:3px;background:var(--border2);border-radius:2px;margin-top:4px; }
+.acct-pct-fill { height:100%;border-radius:2px; }
+
+/* ── TOAST ── */
+.toast { position:fixed;bottom:24px;right:24px;z-index:300;background:var(--card2);border:1px solid var(--border2);padding:12px 18px;border-radius:4px;font-size:13px;color:var(--text);transform:translateY(80px);opacity:0;transition:all .25s ease;pointer-events:none; }
+.toast.show { transform:translateY(0);opacity:1; }
+.toast.success { border-color:var(--green);color:var(--green); }
+.toast.error { border-color:var(--red);color:var(--red); }
+
+.empty { text-align:center;padding:48px 24px;color:var(--text3);font-size:13px; }
+.empty-icon { font-size:32px;margin-bottom:12px;opacity:.4; }
+.divider { height:1px;background:var(--border);margin:20px 0; }
+</style>
+</head>
+<body>
+
+<!-- SETUP BANNER -->
+<div id="setup-banner">
+  <div class="setup-dot"></div>
+  <div class="setup-text">
+    <strong style="color:var(--gold)">Setup required</strong> — Paste your Google Apps Script URL to enable cloud sync across all devices.
+    <a onclick="document.getElementById('setup-help').classList.toggle('hidden')"> How to set this up →</a>
+  </div>
+  <div class="setup-input-row">
+    <input class="setup-input" id="script-url-input" type="text" placeholder="https://script.google.com/macros/s/YOUR_ID/exec">
+    <button class="btn-setup" onclick="saveScriptUrl()">CONNECT</button>
+  </div>
+</div>
+<div id="setup-help" class="hidden" style="background:#0d1200;border-bottom:1px solid #2a3a00;padding:14px 24px;">
+  <div style="max-width:700px;font-size:12px;line-height:1.9;color:#a0b070;">
+    <strong style="color:var(--gold-lt)">Quick Setup (~10 min)</strong> — See the included <code style="background:#1a2a00;padding:1px 5px;border-radius:2px;">SETUP_GUIDE.txt</code> for full instructions and the Apps Script code to paste.
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">CALDWELL SALES <sup>2026</sup></div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showPage('dashboard',this)">Dashboard</button>
+    <button class="nav-btn" onclick="showPage('accounts',this)">Accounts</button>
+    <button class="nav-btn" onclick="showPage('orders',this)">Order Log</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="sync-status">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label">not connected</span>
+    </div>
+    <button onclick="openSettings()" style="background:none;border:1px solid var(--border);color:var(--text3);font-family:'Archivo',sans-serif;font-size:11px;padding:4px 10px;border-radius:3px;cursor:pointer;white-space:nowrap;" title="Configure Google Sheets sync">⚙ Sync</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     DASHBOARD PAGE
+══════════════════════════════════════════ -->
+<div class="page active" id="page-dashboard">
+
+  <div class="g4" style="margin-top:4px;">
+    <div class="card">
+      <div class="card-hd">YTD Caldwell Sales</div>
+      <div class="kpi-val" id="kpi-ytd">—</div>
+      <div class="kpi-lbl">2026 Actual</div>
+      <div class="kpi-sub" id="kpi-ytd-sub">—</div>
+      <div class="prog">
+        <div class="prog-row"><span>Annual target $260K</span><span id="kpi-ytd-pct">—</span></div>
+        <div class="prog-track"><div class="prog-fill fill-gold" id="kpi-ytd-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">Current Month Target</div>
+      <div class="kpi-val" id="kpi-month-target">—</div>
+      <div class="kpi-lbl" id="kpi-month-name">—</div>
+      <div class="kpi-sub" id="kpi-month-sub">—</div>
+      <div class="prog">
+        <div class="prog-row"><span>Month progress</span><span id="kpi-month-pct">—</span></div>
+        <div class="prog-track"><div class="prog-fill fill-gold" id="kpi-month-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd">Caldwell Accounts</div>
+      <div class="kpi-val" id="kpi-accts">—</div>
+      <div class="kpi-lbl">Active This Year</div>
+      <div class="kpi-sub" id="kpi-accts-sub">—</div>
+    </div>
+    <div class="card">
+      <div class="card-hd">Behind Target</div>
+      <div class="kpi-val" id="kpi-behind" style="color:var(--amber)">—</div>
+      <div class="kpi-lbl">Accounts Below Pace</div>
+      <div class="kpi-sub" id="kpi-behind-sub">—</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">MONTHLY PACING</div>
+    <div class="sec-line"></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap;">
+      <span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:10px;height:10px;background:var(--border2);border-radius:1px;"></span>Target</span>
+      <span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:10px;height:10px;background:var(--gold);border-radius:1px;"></span>Actual</span>
+    </div>
+    <div class="bar-chart" id="bar-chart"></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">ACCOUNT PACING</div>
+    <div class="sec-line"></div>
+    <button class="sec-action" onclick="openOrderModal()">+ LOG ORDER</button>
+  </div>
+  <div class="card">
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="nav-btn active" onclick="setAcctFilter('all',this)">All</button>
+      <button class="nav-btn" onclick="setAcctFilter('behind',this)">Behind</button>
+      <button class="nav-btn" onclick="setAcctFilter('ontrack',this)">On Track</button>
+      <button class="nav-btn" onclick="setAcctFilter('noorders',this)">No Orders Yet</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Account</th><th>St</th><th>Tier</th>
+          <th class="num">2025 Caldwell</th>
+          <th class="num">2026 Target</th>
+          <th class="num">YTD Actual</th>
+          <th class="num">Remaining</th>
+          <th>Pace</th><th>Status</th>
+        </tr></thead>
+        <tbody id="acct-pacing-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     ACCOUNTS PAGE
+══════════════════════════════════════════ -->
+<div class="page" id="page-accounts">
+  <div class="sec" style="margin-top:4px;">
+    <div class="sec-title">CALDWELL ACCOUNTS</div>
+    <div class="sec-line"></div>
+    <button class="sec-action" onclick="openAccountModal()">+ ADD ACCOUNT</button>
+  </div>
+
+  <!-- Filter / search row -->
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+    <input type="text" id="acct-search" class="form-input" style="width:220px;font-size:12px;padding:5px 10px;" placeholder="Search accounts…" oninput="renderAccountsPage()">
+    <select id="acct-state-filter" class="form-select" style="width:110px;font-size:12px;padding:5px 10px;" onchange="renderAccountsPage()">
+      <option value="">All States</option>
+      <option>CA</option><option>AZ</option><option>NV</option><option>NM</option><option>Other</option>
+    </select>
+    <select id="acct-tier-filter" class="form-select" style="width:110px;font-size:12px;padding:5px 10px;" onchange="renderAccountsPage()">
+      <option value="">All Tiers</option>
+      <option>Tier 1</option><option>Tier 2</option><option>Tier 3</option><option>Tier 4</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Account</th><th>State</th><th>City</th><th>Tier</th>
+          <th class="num">2025 Baseline</th>
+          <th class="num">2026 Target</th>
+          <th class="num">YTD Actual</th>
+          <th class="num">Variance</th>
+          <th>Pace</th><th></th>
+        </tr></thead>
+        <tbody id="accounts-page-tbody"></tbody>
+      </table>
+    </div>
+    <div id="accounts-empty" class="empty hidden">
+      <div class="empty-icon">🏪</div>
+      No accounts yet. Add your first Caldwell account above.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ORDER LOG PAGE
+══════════════════════════════════════════ -->
+<div class="page" id="page-orders">
+  <div class="sec" style="margin-top:4px;">
+    <div class="sec-title">ORDER LOG</div>
+    <div class="sec-line"></div>
+    <button class="sec-action" onclick="openOrderModal()">+ LOG ORDER</button>
+  </div>
+  <div class="card">
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+      <input type="text" id="order-search" class="form-input" style="width:200px;font-size:12px;padding:5px 10px;" placeholder="Search account or notes…" oninput="renderOrderLog()">
+      <select id="order-month-filter" class="form-select" style="width:140px;font-size:12px;padding:5px 10px;" onchange="renderOrderLog()">
+        <option value="">All Months</option>
+        <option>January</option><option>February</option><option>March</option><option>April</option>
+        <option>May</option><option>June</option><option>July</option><option>August</option>
+        <option>September</option><option>October</option><option>November</option><option>December</option>
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Date</th><th>Account</th><th>State</th>
+          <th class="num">Amount</th>
+          <th>Products</th><th>Type</th><th>Invoice / PO</th><th>Notes</th><th></th>
+        </tr></thead>
+        <tbody id="order-log-tbody"></tbody>
+      </table>
+    </div>
+    <div id="order-empty" class="empty hidden">
+      <div class="empty-icon">📋</div>
+      No orders logged yet. Hit "+ LOG ORDER" to add your first entry.
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     LOG ORDER MODAL
+══════════════════════════════════════════ -->
+<div class="modal-bg" id="order-modal">
+  <div class="modal modal-lg">
+    <div class="modal-title">LOG CALDWELL ORDER</div>
+    <div class="modal-sub">Find an existing account or add a new one on the fly</div>
+
+    <!-- Account search -->
+    <div class="form-group">
+      <label class="form-label">Account <span>*</span></label>
+      <div class="acct-search-wrap">
+        <input type="text" class="acct-search-input" id="o-acct-search"
+          placeholder="Type to search accounts…"
+          autocomplete="off"
+          oninput="handleAcctSearch(this.value)"
+          onfocus="handleAcctSearch(this.value)">
+        <input type="hidden" id="o-acct-id">
+        <div class="acct-dropdown" id="o-acct-dropdown"></div>
+      </div>
+    </div>
+
+    <!-- Inline new account fields — shown when "Add new account" is picked -->
+    <div class="new-acct-callout" id="new-acct-callout">
+      <div class="new-acct-callout-title">✦ New Account Details</div>
+      <div class="form-row3">
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Business Name <span>*</span></label>
+          <input type="text" class="form-input" id="na-name" placeholder="Full name">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">City</label>
+          <input type="text" class="form-input" id="na-city" placeholder="City">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">State</label>
+          <select class="form-select" id="na-state">
+            <option value="">—</option><option>CA</option><option>AZ</option><option>NV</option><option>NM</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:12px;">
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Tier</label>
+          <select class="form-select" id="na-tier">
+            <option>Tier 1</option><option>Tier 2</option><option selected>Tier 3</option><option>Tier 4</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">2025 Caldwell Baseline ($)</label>
+          <input type="number" class="form-input" id="na-baseline" placeholder="0 if new" min="0">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:12px;margin-bottom:0;">
+        <label class="form-label">How they were onboarded / notes</label>
+        <input type="text" class="form-input" id="na-notes" placeholder="e.g. Converted from prospect, met at trade show…">
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Order details -->
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date <span>*</span></label>
+        <input type="date" class="form-input" id="o-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Order Amount ($) <span>*</span></label>
+        <input type="number" class="form-input" id="o-amount" placeholder="0.00" step="0.01" min="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Products (Caldwell lines ordered)</label>
+      <input type="text" class="form-input" id="o-products" placeholder="e.g. The King is Dead, Blind Man's Bluff, Eastern Standard">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Order Type</label>
+        <select class="form-select" id="o-type">
+          <option>Reorder</option>
+          <option>New Account First Order</option>
+          <option>Pre-Release / Allocation</option>
+          <option>Tradeshow Order</option>
+          <option>Phone Order</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Invoice / PO #</label>
+        <input type="text" class="form-input" id="o-invoice" placeholder="Optional">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-textarea" id="o-notes" placeholder="Any context, follow-up needed, etc."></textarea>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('order-modal')">Cancel</button>
+      <button class="btn-save" id="o-save-btn" onclick="saveOrder()">SAVE ORDER</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ADD / EDIT ACCOUNT MODAL
+══════════════════════════════════════════ -->
+<div class="modal-bg" id="account-modal">
+  <div class="modal">
+    <div class="modal-title" id="am-title">ADD ACCOUNT</div>
+    <div class="modal-sub" id="am-sub">Add an existing account that's ordering Caldwell for the first time, or a brand new account</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Business Name <span>*</span></label>
+        <input type="text" class="form-input" id="am-name" placeholder="Full business name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">City</label>
+        <input type="text" class="form-input" id="am-city" placeholder="City">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">State</label>
+        <select class="form-select" id="am-state">
+          <option value="">—</option><option>CA</option><option>AZ</option><option>NV</option><option>NM</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tier</label>
+        <select class="form-select" id="am-tier">
+          <option>Tier 1</option><option>Tier 2</option><option selected>Tier 3</option><option>Tier 4</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">2025 Caldwell Baseline ($)</label>
+        <input type="number" class="form-input" id="am-baseline" placeholder="0 if new to Caldwell" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">2026 Target ($) <span style="color:var(--text3);font-size:9px;">(optional override)</span></label>
+        <input type="number" class="form-input" id="am-target" placeholder="Auto-calc if blank" min="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">How they were onboarded / background notes</label>
+      <textarea class="form-textarea" id="am-notes" placeholder="e.g. Existing account, first Caldwell order Jan 2026. Met owner at trade show. Converted from prospect list."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger hidden" id="am-delete" onclick="deleteAccount()">Delete Account</button>
+      <button class="btn-cancel" onclick="closeModal('account-modal')">Cancel</button>
+      <button class="btn-save" id="am-save" onclick="saveAccount()">SAVE ACCOUNT</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     SETTINGS MODAL
+══════════════════════════════════════════ -->
+<div class="modal-bg" id="settings-modal">
+  <div class="modal">
+    <div class="modal-title">⚙ SYNC SETTINGS</div>
+    <div class="modal-sub">Connect to Google Sheets so your data stays in sync across all devices</div>
+    <div class="form-group">
+      <label class="form-label">Google Apps Script Web App URL</label>
+      <input type="text" class="form-input" id="settings-url-input"
+        placeholder="https://script.google.com/macros/s/YOUR_ID/exec"
+        style="font-family:var(--mono);font-size:11px;">
+      <div style="margin-top:6px;font-size:11px;color:var(--text3);line-height:1.6;">
+        See <strong style="color:var(--text2)">SETUP_GUIDE.txt</strong> for step-by-step instructions on creating your Apps Script and getting this URL. Takes ~10 minutes, free, no subscriptions.
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:4px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Current Status</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="sync-dot" id="settings-sync-dot"></div>
+        <span style="font-size:12px;color:var(--text2);" id="settings-sync-label">—</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:6px;word-break:break-all;" id="settings-url-display">No URL configured</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('settings-modal')">Cancel</button>
+      <button class="btn-save" onclick="saveSettings()">SAVE & CONNECT</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTH_TARGETS = [23821,25409,30174,43800,36500,23986,13228,12472,12094,13869,11558,13099];
+const ANNUAL_TARGET = 260008;
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let accounts = [];   // { id, name, city, state, tier, baseline25, target26, notes, addedDate }
+let orders = [];     // { id, accountId, date, amount, products, type, invoice, notes }
+let acctFilter = 'all';
+let editingAccountId = null;
+let addingNewInOrder = false; // whether inline new-account form is open in order modal
+let SCRIPT_URL = localStorage.getItem('caldwell_sales_url') || '';
+
+// ═══════════════════════════════════════════════
+// SETUP / SYNC
+// ═══════════════════════════════════════════════
+function saveScriptUrl() {
+  const url = document.getElementById('script-url-input').value.trim();
+  if (!url.startsWith('https://script.google.com')) { showToast('Invalid Apps Script URL','error'); return; }
+  SCRIPT_URL = url;
+  localStorage.setItem('caldwell_sales_url', url);
+  document.getElementById('setup-banner').classList.add('hidden');
+  document.getElementById('setup-help').classList.add('hidden');
+  loadData();
+}
+
+function setSyncState(state, msg) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot' + (state==='ok'?' ok':state==='loading'?' loading':state==='err'?' err':'');
+  lbl.textContent = msg || {idle:'not connected',loading:'syncing…',ok:'synced',err:'sync error'}[state] || state;
+}
+
+async function loadData() {
+  if (!SCRIPT_URL) { seedData(); renderAll(); return; }
+  setSyncState('loading');
+  try {
+    console.log('[Caldwell Sync] Fetching:', SCRIPT_URL + '?action=getAll');
+    const res = await fetch(SCRIPT_URL + '?action=getAll', {
+      method: 'GET',
+      redirect: 'follow',
+    });
+    console.log('[Caldwell Sync] Response status:', res.status, res.statusText);
+    console.log('[Caldwell Sync] Response type:', res.type);
+    const text = await res.text();
+    console.log('[Caldwell Sync] Raw response (first 500 chars):', text.substring(0, 500));
+    let data;
+    try { data = JSON.parse(text); }
+    catch(pe) {
+      console.error('[Caldwell Sync] JSON parse failed. Raw text was:', text);
+      throw new Error('Bad response — check Apps Script deployment settings');
+    }
+    if (data.error) throw new Error(data.error);
+    accounts = data.accounts || [];
+    orders = data.orders || [];
+    setSyncState('ok', 'synced ' + new Date().toLocaleTimeString());
+  } catch(e) {
+    console.error('[Caldwell Sync] loadData error:', e);
+    setSyncState('err', 'sync failed');
+    showToast('Load failed: ' + e.message, 'error');
+    seedData();
+  }
+  renderAll();
+}
+
+async function push(payload) {
+  renderAll(); // optimistic update
+  if (!SCRIPT_URL) { showToast('Saved (no sync configured)', 'success'); return; }
+  setSyncState('loading');
+  try {
+    // Must use text/plain to avoid CORS preflight rejection by Google Apps Script
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch(pe) { throw new Error('Bad response — re-deploy your Apps Script and try again'); }
+    if (data.error) throw new Error(data.error);
+    setSyncState('ok', 'synced ' + new Date().toLocaleTimeString());
+    showToast('Saved & synced ✓', 'success');
+  } catch(e) {
+    setSyncState('err', 'sync error');
+    showToast('Sync failed: ' + e.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// SEED DATA (pre-load your existing accounts)
+// ═══════════════════════════════════════════════
+function seedData() {
+  accounts = [
+    { id:'a1',  name:"Anthony's Cigar Emporium",   city:'Tucson',        state:'AZ', tier:'Tier 1', baseline25:17535, target26:26951, notes:'', addedDate:'2026-01-01' },
+    { id:'a2',  name:"Churchill's Fine Cigars",     city:'Phoenix',       state:'AZ', tier:'Tier 1', baseline25:28145, target26:43259, notes:'', addedDate:'2026-01-01' },
+    { id:'a3',  name:'Havana Style',                city:'Orange',        state:'CA', tier:'Tier 1', baseline25:27010, target26:41514, notes:'', addedDate:'2026-01-01' },
+    { id:'a4',  name:'Park Plaza Liquor and Deli',  city:'Prescott',      state:'AZ', tier:'Tier 2', baseline25:5848,  target26:8988,  notes:'', addedDate:'2026-01-01' },
+    { id:'a5',  name:'Hi-Time Wine Cellars',        city:'Costa Mesa',    state:'CA', tier:'Tier 2', baseline25:6523,  target26:10026, notes:'', addedDate:'2026-01-01' },
+    { id:'a6',  name:'Zander-Greg',                 city:'Glendale',      state:'CA', tier:'Tier 2', baseline25:4627,  target26:7112,  notes:'', addedDate:'2026-01-01' },
+    { id:'a7',  name:'Racine & Laramie',            city:'San Diego',     state:'CA', tier:'Tier 2', baseline25:92,    target26:141,   notes:'', addedDate:'2026-01-01' },
+    { id:'a8',  name:'Luxury Cigar Club',           city:'Cottonwood',    state:'AZ', tier:'Tier 3', baseline25:3078,  target26:4731,  notes:'', addedDate:'2026-01-01' },
+    { id:'a9',  name:'Cigar Dagger CA',             city:'Burbank',       state:'CA', tier:'Tier 3', baseline25:3823,  target26:5876,  notes:'', addedDate:'2026-01-01' },
+    { id:'a10', name:'Minutemen',                   city:'Prescott',      state:'AZ', tier:'Tier 3', baseline25:4521,  target26:6949,  notes:'', addedDate:'2026-01-01' },
+    { id:'a11', name:'Cigar Empire',                city:'Montrose',      state:'CA', tier:'Tier 3', baseline25:1996,  target26:3068,  notes:'', addedDate:'2026-01-01' },
+    { id:'a12', name:'Uptown Cigar & Vape Inc.',    city:'Yucaipa',       state:'CA', tier:'Tier 4', baseline25:1578,  target26:2425,  notes:'', addedDate:'2026-01-01' },
+    { id:'a13', name:'Padres Cigars',               city:'Corrales',      state:'NM', tier:'Tier 4', baseline25:2693,  target26:4139,  notes:'', addedDate:'2026-01-01' },
+    { id:'a14', name:'Havana Cigars CA',            city:'Studio City',   state:'CA', tier:'Tier 4', baseline25:2937,  target26:4514,  notes:'', addedDate:'2026-01-01' },
+    { id:'a15', name:'Morgan Hill Cigar Co.',       city:'Morgan Hill',   state:'CA', tier:'Tier 4', baseline25:1220,  target26:1875,  notes:'', addedDate:'2026-01-01' },
+    { id:'a16', name:'House of Cigars & Tobacco',   city:'El Cajon',      state:'CA', tier:'Tier 4', baseline25:1801,  target26:2768,  notes:'', addedDate:'2026-01-01' },
+    { id:'a17', name:'Las Vegas Cigar Outlet',      city:'Las Vegas',     state:'NV', tier:'Tier 4', baseline25:1328,  target26:2041,  notes:'', addedDate:'2026-01-01' },
+    { id:'a18', name:'Low Side Cigar Lounge',       city:'Pahrump',       state:'NV', tier:'Tier 4', baseline25:1469,  target26:2258,  notes:'', addedDate:'2026-01-01' },
+    { id:'a19', name:'Corona Club',                 city:'Vacaville',     state:'CA', tier:'Tier 4', baseline25:2366,  target26:3637,  notes:'', addedDate:'2026-01-01' },
+    { id:'a20', name:'M & L Wholesale',             city:'N. Hollywood',  state:'CA', tier:'Tier 4', baseline25:2191,  target26:3368,  notes:'', addedDate:'2026-01-01' },
+    { id:'a21', name:'United Distributors Corp',    city:'N. Hollywood',  state:'CA', tier:'Tier 4', baseline25:1925,  target26:2959,  notes:'', addedDate:'2026-01-01' },
+    { id:'a22', name:"Bo's Cigar Lounge",           city:'Bellflower',    state:'CA', tier:'Tier 4', baseline25:1380,  target26:2121,  notes:'', addedDate:'2026-01-01' },
+    { id:'a23', name:'ZG California West LLC',      city:'Glendale',      state:'CA', tier:'Tier 4', baseline25:460,   target26:707,   notes:'', addedDate:'2026-01-01' },
+    { id:'a24', name:'Havana House',                city:'Niles',         state:'OH', tier:'Tier 1', baseline25:14923, target26:22937, notes:'', addedDate:'2026-01-01' },
+    { id:'a25', name:'The Cigar Vault Oakdale',     city:'Oakdale',       state:'PA', tier:'Tier 2', baseline25:7197,  target26:11062, notes:'', addedDate:'2026-01-01' },
+    { id:'a26', name:'Robusto & Briar',             city:'Lakewood',      state:'OH', tier:'Tier 3', baseline25:5903,  target26:9073,  notes:'', addedDate:'2026-01-01' },
+    { id:'a27', name:'Summit Cigar Company',        city:'Akron',         state:'OH', tier:'Tier 3', baseline25:4422,  target26:6797,  notes:'', addedDate:'2026-01-01' },
+    { id:'a28', name:'Secreto Cigar Vault',         city:'Ferndale',      state:'MI', tier:'Tier 4', baseline25:2767,  target26:4253,  notes:'', addedDate:'2026-01-01' },
+    { id:'a29', name:'Small Batch',                 city:'',              state:'CA', tier:'Tier 3', baseline25:0,     target26:0,     notes:'', addedDate:'2026-01-01' },
+    { id:'a30', name:'Empire Cigars Montrose',      city:'Montrose',      state:'CA', tier:'Tier 3', baseline25:0,     target26:0,     notes:'', addedDate:'2026-01-01' },
+    { id:'a31', name:'Liberty Tobacco',             city:'San Diego',     state:'CA', tier:'Tier 1', baseline25:0,     target26:0,     notes:'New Caldwell account opened Jan 2026', addedDate:'2026-01-19' },
+  ];
+  orders = [
+    { id:'o1', accountId:'a1',  date:'2026-01-05', amount:9282.11, products:'Caldwell',  type:'Reorder',              invoice:'', notes:'' },
+    { id:'o2', accountId:'a2',  date:'2026-01-06', amount:3643.57, products:'Caldwell',  type:'Reorder',              invoice:'', notes:'' },
+    { id:'o3', accountId:'a6',  date:'2026-01-02', amount:895.11,  products:'Caldwell',  type:'Reorder',              invoice:'', notes:'' },
+    { id:'o4', accountId:'a20', date:'2026-01-12', amount:245.70,  products:'Caldwell',  type:'Phone Order',          invoice:'', notes:'' },
+    { id:'o5', accountId:'a21', date:'2026-01-12', amount:1243.64, products:'Caldwell',  type:'Reorder',              invoice:'', notes:'' },
+    { id:'o6', accountId:'a16', date:'2026-01-19', amount:584.08,  products:'Caldwell',  type:'Reorder',              invoice:'', notes:'House of Cigar SD' },
+    { id:'o7', accountId:'a29', date:'2026-01-21', amount:6214.21, products:'Caldwell',  type:'Reorder',              invoice:'', notes:'' },
+    { id:'o8', accountId:'a31', date:'2026-01-24', amount:1480.51, products:'Caldwell',  type:'New Account First Order',invoice:'', notes:'Chris finally pulled the trigger' },
+    { id:'o9', accountId:'a9',  date:'2026-01-24', amount:624.76,  products:'Caldwell',  type:'Reorder',              invoice:'', notes:'' },
+  ];
+}
+
+// ═══════════════════════════════════════════════
+// COMPUTED HELPERS
+// ═══════════════════════════════════════════════
+function getYTDByAccount() {
+  const map = {};
+  orders.forEach(o => { map[o.accountId] = (map[o.accountId]||0) + parseFloat(o.amount||0); });
+  return map;
+}
+
+function getMonthlyActuals() {
+  const arr = new Array(12).fill(0);
+  orders.forEach(o => {
+    const d = new Date(o.date + 'T12:00:00');
+    if (!isNaN(d) && d.getFullYear() === 2026) arr[d.getMonth()] += parseFloat(o.amount||0);
+  });
+  return arr;
+}
+
+function getAccountById(id) { return accounts.find(a => a.id === id); }
+
+function getEffectiveTarget(a) {
+  if (a.target26 > 0) return a.target26;
+  if (a.baseline25 > 0) return Math.round(a.baseline25 * 1.537);
+  return 0;
+}
+
+function yearPacePct() {
+  const now = new Date();
+  const start = new Date(2026, 0, 1);
+  const end = new Date(2027, 0, 1);
+  return Math.min(1, (now - start) / (end - start));
+}
+
+// ═══════════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════════
+function renderAll() {
+  renderKPIs();
+  renderBarChart();
+  renderAcctPacing();
+  renderAccountsPage();
+  renderOrderLog();
+}
+
+function renderKPIs() {
+  const ytd = orders.reduce((s,o) => s + parseFloat(o.amount||0), 0);
+  const pct = (ytd / ANNUAL_TARGET * 100);
+  const now = new Date();
+  const monthIdx = now.getMonth();
+  const monthTarget = MONTH_TARGETS[monthIdx];
+  const actuals = getMonthlyActuals();
+  const monthActual = actuals[monthIdx];
+  const monthPct = (monthActual / monthTarget * 100);
+  const ytdMap = getYTDByAccount();
+  const activeAccts = accounts.filter(a => ytdMap[a.id] > 0).length;
+  const pace = yearPacePct();
+  const behind = accounts.filter(a => {
+    const tgt = getEffectiveTarget(a);
+    if (!tgt) return false;
+    return (ytdMap[a.id]||0) < tgt * pace * 0.85;
+  }).length;
+
+  document.getElementById('kpi-ytd').textContent = '$' + ytd.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('kpi-ytd-sub').textContent = `Gap to target: $${Math.max(0,ANNUAL_TARGET-ytd).toLocaleString('en-US',{maximumFractionDigits:0})}`;
+  document.getElementById('kpi-ytd-pct').textContent = pct.toFixed(1) + '%';
+  document.getElementById('kpi-ytd-bar').style.width = Math.min(pct,100) + '%';
+
+  document.getElementById('kpi-month-target').textContent = '$' + monthTarget.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('kpi-month-name').textContent = MONTHS[monthIdx] + ' Target';
+  document.getElementById('kpi-month-sub').textContent = `Actual: $${monthActual.toLocaleString('en-US',{maximumFractionDigits:0})}`;
+  document.getElementById('kpi-month-pct').textContent = monthPct.toFixed(1) + '%';
+  document.getElementById('kpi-month-bar').style.width = Math.min(monthPct,100) + '%';
+
+  document.getElementById('kpi-accts').textContent = activeAccts;
+  document.getElementById('kpi-accts-sub').textContent = `of ${accounts.length} total Caldwell accounts`;
+  document.getElementById('kpi-behind').textContent = behind;
+  document.getElementById('kpi-behind-sub').textContent = `accounts below 85% of expected pace`;
+}
+
+function renderBarChart() {
+  const actuals = getMonthlyActuals();
+  const maxVal = Math.max(...MONTH_TARGETS, ...actuals, 1);
+  document.getElementById('bar-chart').innerHTML = MONTHS.map((m,i) => {
+    const tH = Math.round(MONTH_TARGETS[i]/maxVal*100);
+    const aH = actuals[i] > 0 ? Math.round(actuals[i]/maxVal*100) : 0;
+    return `<div class="bar-col">
+      <div class="bar-stack">
+        <div class="bar-tgt" style="height:${tH}%"></div>
+        ${aH > 0 ? `<div class="bar-act" style="height:${aH}%"></div>` : ''}
+      </div>
+      <div class="bar-lbl">${m.slice(0,3)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAcctPacing() {
+  const ytdMap = getYTDByAccount();
+  const pace = yearPacePct();
+  let rows = accounts.filter(a => getEffectiveTarget(a) > 0 || ytdMap[a.id] > 0);
+
+  if (acctFilter === 'behind') rows = rows.filter(a => {
+    const tgt = getEffectiveTarget(a);
+    return tgt > 0 && (ytdMap[a.id]||0) < tgt * pace * 0.85;
+  });
+  else if (acctFilter === 'ontrack') rows = rows.filter(a => {
+    const tgt = getEffectiveTarget(a);
+    return tgt > 0 && (ytdMap[a.id]||0) >= tgt * pace * 0.85;
+  });
+  else if (acctFilter === 'noorders') rows = rows.filter(a => !(ytdMap[a.id] > 0));
+
+  rows.sort((a,b) => getEffectiveTarget(b) - getEffectiveTarget(a));
+
+  document.getElementById('acct-pacing-tbody').innerHTML = rows.map(a => {
+    const actual = ytdMap[a.id]||0;
+    const tgt = getEffectiveTarget(a);
+    const pct = tgt > 0 ? (actual/tgt*100) : 0;
+    const expected = tgt * pace * 100;
+    const remaining = Math.max(0, tgt - actual);
+    const isNew = a.addedDate && a.addedDate > '2026-01-01';
+
+    let statusBadge, fillClass;
+    if (actual === 0) { statusBadge = '<span class="badge b-gray">No Orders</span>'; fillClass = 'fill-dim'; }
+    else if (pct >= expected) { statusBadge = '<span class="badge b-green">On Track</span>'; fillClass = 'fill-green'; }
+    else if (pct >= expected * 0.7) { statusBadge = '<span class="badge b-amber">Watch</span>'; fillClass = 'fill-amber'; }
+    else { statusBadge = '<span class="badge b-red">Behind</span>'; fillClass = 'fill-red'; }
+
+    return `<tr>
+      <td>
+        <div style="font-weight:500;">${a.name}${isNew ? ' <span class="badge b-new" style="font-size:8px;margin-left:4px;">NEW</span>' : ''}</div>
+        <div class="acct-pct-bar"><div class="acct-pct-fill ${fillClass}" style="width:${Math.min(pct,100)}%"></div></div>
+      </td>
+      <td><span style="font-family:var(--mono);font-size:10px;color:var(--text3);">${a.state}</span></td>
+      <td><span class="badge b-gray">${a.tier}</span></td>
+      <td class="num muted">$${(a.baseline25||0).toLocaleString()}</td>
+      <td class="num muted">${tgt > 0 ? '$' + tgt.toLocaleString() : '—'}</td>
+      <td class="num" style="color:${actual>0?'var(--text)':'var(--text3)'}">$${actual.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+      <td class="num muted">$${remaining.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:${pct>=expected*0.85?'var(--green)':'var(--amber)'}">${pct.toFixed(0)}%</td>
+      <td>${statusBadge}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text3);font-family:var(--mono);font-size:12px;">No accounts match this filter.</td></tr>`;
+}
+
+function renderAccountsPage() {
+  const search = (document.getElementById('acct-search')?.value||'').toLowerCase();
+  const stateF = document.getElementById('acct-state-filter')?.value||'';
+  const tierF = document.getElementById('acct-tier-filter')?.value||'';
+  const ytdMap = getYTDByAccount();
+  const pace = yearPacePct();
+
+  let rows = [...accounts];
+  if (search) rows = rows.filter(a => a.name.toLowerCase().includes(search) || (a.city||'').toLowerCase().includes(search));
+  if (stateF) rows = rows.filter(a => a.state === stateF);
+  if (tierF) rows = rows.filter(a => a.tier === tierF);
+  rows.sort((a,b) => getEffectiveTarget(b) - getEffectiveTarget(a));
+
+  const tbody = document.getElementById('accounts-page-tbody');
+  const emptyEl = document.getElementById('accounts-empty');
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '';
+    emptyEl.classList.remove('hidden');
+    return;
+  }
+  emptyEl.classList.add('hidden');
+
+  tbody.innerHTML = rows.map(a => {
+    const actual = ytdMap[a.id]||0;
+    const tgt = getEffectiveTarget(a);
+    const pct = tgt > 0 ? (actual/tgt*100) : 0;
+    const expectedPct = pace * 100;
+    const variance = actual - tgt * pace;
+    const isNew = a.addedDate && a.addedDate > '2026-01-01';
+
+    return `<tr>
+      <td>
+        <div style="font-weight:500;">${a.name}${isNew?'<span class="badge b-new" style="font-size:8px;margin-left:6px;">NEW</span>':''}</div>
+        ${a.notes ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;">${a.notes}</div>` : ''}
+      </td>
+      <td style="font-family:var(--mono);font-size:11px;">${a.state||'—'}</td>
+      <td class="muted" style="font-size:12px;">${a.city||'—'}</td>
+      <td><span class="badge b-gray">${a.tier}</span></td>
+      <td class="num muted">$${(a.baseline25||0).toLocaleString()}</td>
+      <td class="num muted">${tgt>0?'$'+tgt.toLocaleString():'—'}</td>
+      <td class="num" style="color:${actual>0?'var(--text)':'var(--text3)'}">$${actual.toLocaleString('en-US',{maximumFractionDigits:0})}</td>
+      <td class="num" style="color:${variance>=0?'var(--green)':actual===0?'var(--text3)':'var(--red)'}">${actual>0?(variance>=0?'+':'')+Math.round(variance).toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}):'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:${pct>=expectedPct*0.85?'var(--green)':pct>0?'var(--amber)':'var(--text3)'}">${tgt>0?pct.toFixed(0)+'%':'—'}</td>
+      <td>
+        <button onclick="openAccountModal('${a.id}')" style="background:none;border:1px solid var(--border2);color:var(--text2);font-size:11px;padding:3px 9px;border-radius:3px;cursor:pointer;">Edit</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderOrderLog() {
+  const search = (document.getElementById('order-search')?.value||'').toLowerCase();
+  const monthFilter = document.getElementById('order-month-filter')?.value||'';
+  const tbody = document.getElementById('order-log-tbody');
+  const emptyEl = document.getElementById('order-empty');
+
+  let filtered = [...orders].sort((a,b) => b.date.localeCompare(a.date));
+  if (search) filtered = filtered.filter(o => {
+    const acct = getAccountById(o.accountId);
+    return (acct?.name||'').toLowerCase().includes(search) || (o.notes||'').toLowerCase().includes(search);
+  });
+  if (monthFilter) filtered = filtered.filter(o => {
+    const d = new Date(o.date + 'T12:00:00');
+    return MONTHS[d.getMonth()] === monthFilter;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    emptyEl.classList.remove('hidden');
+    return;
+  }
+  emptyEl.classList.add('hidden');
+
+  tbody.innerHTML = filtered.map(o => {
+    const acct = getAccountById(o.accountId);
+    const d = new Date(o.date + 'T12:00:00');
+    const dateStr = isNaN(d) ? o.date : `${MONTHS[d.getMonth()].slice(0,3)} ${d.getDate()}`;
+    return `<tr>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap;">${dateStr}</td>
+      <td style="font-weight:500;">${acct?.name||'Unknown'}</td>
+      <td style="font-family:var(--mono);font-size:10px;color:var(--text3);">${acct?.state||''}</td>
+      <td class="num" style="color:var(--gold);">$${parseFloat(o.amount||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:160px;">${o.products||'—'}</td>
+      <td><span class="badge b-gray" style="font-size:8px;">${o.type||''}</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text3);">${o.invoice||'—'}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:180px;">${o.notes||'—'}</td>
+      <td><button onclick="deleteOrder('${o.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1;padding:0 2px;" title="Delete">×</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// ACCOUNT SEARCH DROPDOWN (in order modal)
+// ═══════════════════════════════════════════════
+function handleAcctSearch(val) {
+  const dd = document.getElementById('o-acct-dropdown');
+  const q = val.toLowerCase();
+  const matches = accounts.filter(a => a.name.toLowerCase().includes(q)).slice(0, 8);
+
+  let html = matches.map(a =>
+    `<div class="acct-opt" onclick="selectAccount('${a.id}','${a.name.replace(/'/g,"\\'")}')">
+       <span>${a.name}</span>
+       <span class="acct-opt-meta">${[a.city,a.state].filter(Boolean).join(', ')} · ${a.tier}</span>
+     </div>`
+  ).join('');
+
+  // Always show "Add new" option
+  html += `<div class="acct-opt-new" onclick="showNewAccountForm('${val.replace(/'/g,"\\'")}')">
+    ✦ Add "${val||'new account'}" as a new account
+  </div>`;
+
+  dd.innerHTML = html;
+  dd.classList.add('open');
+}
+
+function selectAccount(id, name) {
+  document.getElementById('o-acct-search').value = name;
+  document.getElementById('o-acct-id').value = id;
+  document.getElementById('o-acct-dropdown').classList.remove('open');
+  hideNewAccountForm();
+}
+
+function showNewAccountForm(prefill) {
+  document.getElementById('o-acct-dropdown').classList.remove('open');
+  document.getElementById('o-acct-id').value = '';
+  document.getElementById('na-name').value = prefill || document.getElementById('o-acct-search').value;
+  document.getElementById('na-city').value = '';
+  document.getElementById('na-state').value = '';
+  document.getElementById('na-tier').value = 'Tier 3';
+  document.getElementById('na-baseline').value = '';
+  document.getElementById('na-notes').value = '';
+  document.getElementById('new-acct-callout').classList.add('open');
+  addingNewInOrder = true;
+  document.getElementById('na-name').focus();
+}
+
+function hideNewAccountForm() {
+  document.getElementById('new-acct-callout').classList.remove('open');
+  addingNewInOrder = false;
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.acct-search-wrap')) {
+    document.getElementById('o-acct-dropdown')?.classList.remove('open');
+  }
+});
+
+// ═══════════════════════════════════════════════
+// ORDER MODAL
+// ═══════════════════════════════════════════════
+function openOrderModal() {
+  document.getElementById('o-acct-search').value = '';
+  document.getElementById('o-acct-id').value = '';
+  document.getElementById('o-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('o-amount').value = '';
+  document.getElementById('o-products').value = '';
+  document.getElementById('o-invoice').value = '';
+  document.getElementById('o-notes').value = '';
+  document.getElementById('o-type').selectedIndex = 0;
+  hideNewAccountForm();
+  document.getElementById('o-acct-dropdown').classList.remove('open');
+  document.getElementById('order-modal').classList.add('open');
+}
+
+async function saveOrder() {
+  // If adding new account inline, create it first
+  let accountId = document.getElementById('o-acct-id').value;
+  if (addingNewInOrder) {
+    const name = document.getElementById('na-name').value.trim();
+    if (!name) { showToast('Enter a business name for the new account','error'); return; }
+    const newAcct = {
+      id: 'a' + Date.now(),
+      name,
+      city: document.getElementById('na-city').value.trim(),
+      state: document.getElementById('na-state').value,
+      tier: document.getElementById('na-tier').value,
+      baseline25: parseFloat(document.getElementById('na-baseline').value)||0,
+      target26: 0,
+      notes: document.getElementById('na-notes').value.trim(),
+      addedDate: new Date().toISOString().split('T')[0],
+    };
+    accounts.push(newAcct);
+    accountId = newAcct.id;
+    await push({ action:'saveAccount', account:newAcct });
+  }
+
+  if (!accountId) { showToast('Select or add an account first','error'); return; }
+  const amount = document.getElementById('o-amount').value;
+  const date = document.getElementById('o-date').value;
+  if (!amount || !date) { showToast('Date and amount are required','error'); return; }
+
+  const btn = document.getElementById('o-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const order = {
+    id: 'o' + Date.now(),
+    accountId,
+    date,
+    amount: parseFloat(amount),
+    products: document.getElementById('o-products').value,
+    type: document.getElementById('o-type').value,
+    invoice: document.getElementById('o-invoice').value,
+    notes: document.getElementById('o-notes').value,
+  };
+  orders.push(order);
+  closeModal('order-modal');
+  await push({ action:'saveOrder', order });
+  btn.disabled = false; btn.textContent = 'SAVE ORDER';
+}
+
+async function deleteOrder(id) {
+  if (!confirm('Delete this order?')) return;
+  orders = orders.filter(o => o.id !== id);
+  await push({ action:'deleteOrder', id });
+}
+
+// ═══════════════════════════════════════════════
+// ACCOUNT MODAL
+// ═══════════════════════════════════════════════
+function openAccountModal(id) {
+  editingAccountId = id || null;
+  const a = id ? accounts.find(ac => ac.id === id) : null;
+  document.getElementById('am-title').textContent = a ? 'EDIT ACCOUNT' : 'ADD ACCOUNT';
+  document.getElementById('am-sub').textContent = a
+    ? 'Update account details or delete it'
+    : 'Add an existing account ordering Caldwell for the first time, or a brand new account';
+  document.getElementById('am-name').value = a?.name||'';
+  document.getElementById('am-city').value = a?.city||'';
+  document.getElementById('am-state').value = a?.state||'';
+  document.getElementById('am-tier').value = a?.tier||'Tier 3';
+  document.getElementById('am-baseline').value = a?.baseline25||'';
+  document.getElementById('am-target').value = a?.target26||'';
+  document.getElementById('am-notes').value = a?.notes||'';
+  document.getElementById('am-delete').classList.toggle('hidden', !a);
+  document.getElementById('account-modal').classList.add('open');
+}
+
+async function saveAccount() {
+  const name = document.getElementById('am-name').value.trim();
+  if (!name) { showToast('Business name is required','error'); return; }
+  const btn = document.getElementById('am-save');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const baseline = parseFloat(document.getElementById('am-baseline').value)||0;
+  const targetOverride = parseFloat(document.getElementById('am-target').value)||0;
+
+  const acct = {
+    id: editingAccountId || 'a' + Date.now(),
+    name,
+    city: document.getElementById('am-city').value.trim(),
+    state: document.getElementById('am-state').value,
+    tier: document.getElementById('am-tier').value,
+    baseline25: baseline,
+    target26: targetOverride,
+    notes: document.getElementById('am-notes').value.trim(),
+    addedDate: editingAccountId
+      ? (accounts.find(a=>a.id===editingAccountId)?.addedDate || new Date().toISOString().split('T')[0])
+      : new Date().toISOString().split('T')[0],
+  };
+
+  if (editingAccountId) {
+    const idx = accounts.findIndex(a => a.id === editingAccountId);
+    accounts[idx] = acct;
+  } else {
+    accounts.push(acct);
+  }
+
+  closeModal('account-modal');
+  await push({ action:'saveAccount', account:acct });
+  btn.disabled = false; btn.textContent = 'SAVE ACCOUNT';
+}
+
+async function deleteAccount() {
+  if (!confirm('Delete this account? Orders linked to it will remain in the log.')) return;
+  accounts = accounts.filter(a => a.id !== editingAccountId);
+  closeModal('account-modal');
+  await push({ action:'deleteAccount', id:editingAccountId });
+}
+
+// ═══════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════
+function setAcctFilter(type, btn) {
+  acctFilter = type;
+  document.querySelectorAll('#page-dashboard .nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAcctPacing();
+}
+
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.topbar .nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+(type||'');
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// Close modals on backdrop click
+document.addEventListener('DOMContentLoaded', () => {
+  ['order-modal','account-modal','settings-modal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', function(e) {
+      if (e.target === this) closeModal(id);
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+function checkSetup() {
+  if (SCRIPT_URL) {
+    document.getElementById('setup-banner').classList.add('hidden');
+    loadData();
+  } else {
+    setSyncState('idle');
+    seedData();
+    renderAll();
+  }
+}
+
+function openSettings() {
+  document.getElementById('settings-url-input').value = SCRIPT_URL || '';
+  // Mirror current sync state into settings modal
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  document.getElementById('settings-sync-dot').className = dot.className;
+  document.getElementById('settings-sync-label').textContent = lbl.textContent;
+  document.getElementById('settings-url-display').textContent = SCRIPT_URL || 'No URL configured';
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function saveSettings() {
+  const url = document.getElementById('settings-url-input').value.trim();
+  if (url && !url.startsWith('https://script.google.com')) {
+    showToast('That doesn\'t look like a valid Apps Script URL', 'error'); return;
+  }
+  SCRIPT_URL = url;
+  if (url) {
+    localStorage.setItem('caldwell_sales_url', url);
+    closeModal('settings-modal');
+    loadData();
+  } else {
+    localStorage.removeItem('caldwell_sales_url');
+    setSyncState('idle', 'not connected');
+    closeModal('settings-modal');
+    showToast('Sync URL cleared', 'success');
+  }
+}
+
+checkSetup();
+</script>
+
