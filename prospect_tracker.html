@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospect Tracker · Caldwell Territory</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Syne+Mono&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #09090f;
+  --surface: #0f0f18;
+  --card: #141420;
+  --card2: #191926;
+  --border: #22223a;
+  --border2: #2d2d48;
+  --ink: #c8c5e8;
+  --ink2: #6e6b90;
+  --ink3: #3e3c58;
+  --accent: #7c6af0;
+  --accent-lt: #a99bf7;
+  --accent-glow: rgba(124,106,240,0.12);
+  --accent-glow2: rgba(124,106,240,0.06);
+  --accent-dk: #4a3fb0;
+  --gold: #d4a843;
+  --gold-glow: rgba(212,168,67,0.1);
+  --gold-dk: #8a6c28;
+  --green: #4db87a;
+  --green-dim: rgba(77,184,122,0.1);
+  --red: #e05555;
+  --red-dim: rgba(224,85,85,0.1);
+  --amber: #e09640;
+  --amber-dim: rgba(224,150,64,0.1);
+  --blue: #4da8e0;
+  --blue-dim: rgba(77,168,224,0.1);
+  --mono: 'Syne Mono', monospace;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ── SETUP BANNER ── */
+#setup-banner {
+  background: linear-gradient(135deg, #0a0a1a, #12001a);
+  border-bottom: 1px solid var(--accent-dk);
+  padding: 14px 24px;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+#setup-banner.hidden { display: none; }
+.setup-dot { width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+.setup-text { font-size:13px;color:var(--accent-lt);flex:1; }
+.setup-text a { color:var(--accent);text-decoration:underline;cursor:pointer; }
+.setup-input-row { display:flex;gap:8px;align-items:center;flex-wrap:wrap; }
+.setup-input {
+  background: rgba(0,0,0,0.4); border: 1px solid var(--accent-dk); color: var(--ink);
+  font-family: var(--mono); font-size:11px; padding:6px 10px; border-radius:3px; width:340px; outline:none;
+}
+.setup-input:focus { border-color:var(--accent); }
+.setup-input::placeholder { color:var(--ink3); }
+.btn-connect {
+  background: var(--accent); color: white; border: none;
+  padding:6px 14px; font-family:'Syne',sans-serif; font-weight:700; font-size:11px; letter-spacing:1px;
+  border-radius:3px; cursor:pointer; white-space:nowrap;
+}
+.btn-connect:hover { background:var(--accent-lt); color:#09090f; }
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--surface); border-bottom:1px solid var(--border);
+  padding:0 24px; display:flex; align-items:center; justify-content:space-between;
+  height:54px; position:sticky; top:0; z-index:50; gap:16px;
+}
+.logo { font-family:'Syne',sans-serif; font-weight:800; font-size:14px; letter-spacing:2px; color:var(--accent-lt); white-space:nowrap; }
+.logo span { color:var(--ink2); font-weight:400; font-size:12px; margin-left:8px; }
+.nav { display:flex; gap:2px; overflow-x:auto; }
+.nav-btn {
+  background:none; border:1px solid transparent; color:var(--ink2);
+  font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500;
+  padding:5px 14px; border-radius:3px; cursor:pointer; white-space:nowrap; transition:all 0.15s;
+}
+.nav-btn:hover { color:var(--ink); border-color:var(--border2); }
+.nav-btn.active { background:var(--accent-glow); border-color:var(--accent-dk); color:var(--accent-lt); }
+.sync-status { font-family:var(--mono); font-size:10px; color:var(--ink3); white-space:nowrap; display:flex; align-items:center; gap:6px; }
+.sync-dot { width:6px;height:6px;border-radius:50%;background:var(--ink3); }
+.sync-dot.ok { background:var(--green); }
+.sync-dot.loading { background:var(--accent);animation:blink 1s infinite; }
+.sync-dot.err { background:var(--red); }
+
+/* ── LAYOUT ── */
+.page { display:none; padding:24px; max-width:1380px; margin:0 auto; }
+.page.active { display:block; }
+
+/* ── PIPELINE ── */
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+@media(max-width:900px) { .pipeline { grid-template-columns: repeat(3,1fr); } }
+@media(max-width:580px) { .pipeline { grid-template-columns: repeat(2,1fr); } }
+
+.stage-col { }
+.stage-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px 4px 0 0;
+  border-bottom: 2px solid var(--border2);
+  margin-bottom: 8px;
+}
+.stage-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+.stage-name { font-family:'Syne',sans-serif; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
+.stage-count { font-family:var(--mono); font-size:10px; color:var(--ink2); margin-left:auto; }
+.stage-cards { display:flex; flex-direction:column; gap:8px; min-height:40px; }
+
+/* ── KANBAN CARD ── */
+.k-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.k-card:hover { border-color:var(--border2); background:var(--card2); transform:translateY(-1px); }
+.k-card-name { font-weight:600; font-size:13px; margin-bottom:4px; }
+.k-card-loc { font-family:var(--mono); font-size:10px; color:var(--ink2); margin-bottom:8px; }
+.k-card-meta { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.k-card-val { font-family:var(--mono); font-size:10px; color:var(--gold); margin-left:auto; }
+
+/* ── BADGES ── */
+.badge {
+  display:inline-block; padding:2px 6px; border-radius:2px;
+  font-size:9px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; white-space:nowrap;
+}
+.b-purple { background:var(--accent-glow);color:var(--accent-lt);border:1px solid var(--accent-dk); }
+.b-green { background:var(--green-dim);color:var(--green);border:1px solid rgba(77,184,122,0.25); }
+.b-red { background:var(--red-dim);color:var(--red);border:1px solid rgba(224,85,85,0.25); }
+.b-amber { background:var(--amber-dim);color:var(--amber);border:1px solid rgba(224,150,64,0.25); }
+.b-blue { background:var(--blue-dim);color:var(--blue);border:1px solid rgba(77,168,224,0.25); }
+.b-gray { background:rgba(255,255,255,0.04);color:var(--ink2);border:1px solid var(--border2); }
+.b-gold { background:var(--gold-glow);color:var(--gold);border:1px solid var(--gold-dk); }
+
+/* ── CARDS ── */
+.card { background:var(--card); border:1px solid var(--border); border-radius:5px; padding:20px; }
+.card-hd { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:var(--ink3); text-transform:uppercase; margin-bottom:14px; }
+
+/* ── GRIDS ── */
+.g4 { display:grid;grid-template-columns:repeat(4,1fr);gap:12px; }
+.g3 { display:grid;grid-template-columns:repeat(3,1fr);gap:12px; }
+@media(max-width:800px){.g4,.g3{grid-template-columns:repeat(2,1fr)}}
+
+/* ── KPI ── */
+.kpi-val { font-family:'Syne',sans-serif; font-weight:800; font-size:30px; color:var(--accent-lt); line-height:1; }
+.kpi-lbl { font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--ink2); margin-top:5px; }
+.kpi-sub { font-family:var(--mono); font-size:11px; color:var(--ink3); margin-top:5px; }
+
+/* ── SECTION HEADER ── */
+.sec { display:flex; align-items:center; gap:12px; margin:26px 0 14px; }
+.sec-title { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; letter-spacing:1px; white-space:nowrap; }
+.sec-line { flex:1; height:1px; background:var(--border); }
+.sec-action {
+  background:var(--accent-glow); border:1px solid var(--accent-dk); color:var(--accent-lt);
+  font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600;
+  padding:4px 12px; border-radius:3px; cursor:pointer; white-space:nowrap; transition:all 0.15s;
+}
+.sec-action:hover { background:var(--accent-glow2); }
+.sec-action.gold { background:var(--gold-glow); border-color:var(--gold-dk); color:var(--gold); }
+
+/* ── TABLES ── */
+.tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+table { width:100%; border-collapse:collapse; }
+th { font-family:var(--mono); font-size:9px; font-weight:500; letter-spacing:1.5px; text-transform:uppercase; color:var(--ink3); padding:9px 12px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+td { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.025); font-size:13px; vertical-align:top; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(255,255,255,0.015); }
+.num { font-family:var(--mono); font-size:12px; text-align:right; white-space:nowrap; }
+.muted { color:var(--ink2); }
+
+/* ── MODAL ── */
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto; }
+.modal-bg.open { display:flex; }
+.modal { background:var(--card); border:1px solid var(--border2); border-radius:6px; padding:28px; width:100%; max-width:620px; margin:auto; animation:up .2s ease; }
+@keyframes up { from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1} }
+.modal-title { font-family:'Syne',sans-serif; font-weight:800; font-size:16px; letter-spacing:1px; color:var(--accent-lt); margin-bottom:6px; }
+.modal-sub { font-size:12px; color:var(--ink2); margin-bottom:22px; }
+
+/* FORM */
+.form-group { margin-bottom:14px; }
+.form-label { display:block; font-family:var(--mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--ink2); margin-bottom:5px; }
+.form-input, .form-select, .form-textarea {
+  width:100%; background:var(--surface); border:1px solid var(--border2); color:var(--ink);
+  font-family:'DM Sans',sans-serif; font-size:13px; padding:8px 12px; border-radius:3px; outline:none; transition:border-color 0.15s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--accent-dk); }
+.form-input::placeholder, .form-textarea::placeholder { color:var(--ink3); }
+.form-select option { background:var(--card2); }
+.form-textarea { resize:vertical; min-height:80px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media(max-width:480px) { .form-row { grid-template-columns:1fr; } }
+.form-row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+@media(max-width:580px) { .form-row3 { grid-template-columns:1fr 1fr; } }
+
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:22px; }
+.btn-cancel { background:none; border:1px solid var(--border2); color:var(--ink2); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; padding:8px 16px; border-radius:3px; cursor:pointer; }
+.btn-cancel:hover { border-color:var(--ink2); color:var(--ink); }
+.btn-save { background:var(--accent); border:none; color:white; font-family:'Syne',sans-serif; font-weight:700; font-size:12px; letter-spacing:1px; padding:8px 20px; border-radius:3px; cursor:pointer; }
+.btn-save:hover { background:var(--accent-lt); color:#09090f; }
+.btn-save:disabled { opacity:0.5; cursor:not-allowed; }
+.btn-danger { background:var(--red-dim); border:1px solid rgba(224,85,85,0.3); color:var(--red); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; padding:8px 16px; border-radius:3px; cursor:pointer; margin-right:auto; }
+
+/* ── CONTACT LOG ── */
+.contact-log { display:flex; flex-direction:column; gap:8px; }
+.contact-entry {
+  background:var(--surface); border:1px solid var(--border); border-radius:4px;
+  padding:12px; display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:start;
+}
+.contact-icon { font-size:16px; margin-top:1px; }
+.contact-date { font-family:var(--mono); font-size:10px; color:var(--ink2); margin-bottom:3px; }
+.contact-outcome { font-size:13px; line-height:1.5; }
+.contact-next { font-size:11px; color:var(--accent-lt); margin-top:5px; font-style:italic; }
+.contact-type-badge { }
+.log-actions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.btn-log {
+  background:var(--accent-glow); border:1px solid var(--accent-dk); color:var(--accent-lt);
+  font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500;
+  padding:4px 10px; border-radius:3px; cursor:pointer; transition:all 0.15s;
+}
+.btn-log:hover { background:var(--accent-glow2); }
+
+/* ── PROSPECT DETAIL ── */
+.detail-modal { max-width:720px; }
+.detail-section { margin-top:20px; padding-top:20px; border-top:1px solid var(--border); }
+.detail-section-title { font-family:var(--mono); font-size:10px; letter-spacing:2px; color:var(--ink3); text-transform:uppercase; margin-bottom:12px; }
+
+/* ── STAGE PIPE INDICATOR ── */
+.stage-pipe { display:flex; gap:3px; margin:14px 0; }
+.stage-pip { flex:1; height:3px; border-radius:2px; background:var(--border2); }
+.stage-pip.done { background:var(--accent); }
+.stage-pip.current { background:var(--accent-lt); }
+
+/* ── TOAST ── */
+.toast { position:fixed;bottom:24px;right:24px;z-index:300; background:var(--card2);border:1px solid var(--border2); padding:12px 18px;border-radius:4px; font-size:13px;color:var(--ink); transform:translateY(80px);opacity:0; transition:all 0.25s ease; pointer-events:none; }
+.toast.show { transform:translateY(0);opacity:1; }
+.toast.success { border-color:var(--green);color:var(--green); }
+.toast.error { border-color:var(--red);color:var(--red); }
+
+/* ── EMPTY ── */
+.empty { text-align:center;padding:48px 24px;color:var(--ink3);font-size:13px; }
+.empty-icon { font-size:32px;margin-bottom:12px;opacity:0.4; }
+</style>
+</head>
+<body>
+
+<!-- SETUP BANNER -->
+<div id="setup-banner">
+  <div class="setup-dot"></div>
+  <div class="setup-text">
+    <strong style="color:var(--accent-lt)">Setup required</strong> — Paste your Google Apps Script URL to enable cloud sync.
+    <a onclick="document.getElementById('setup-help').classList.toggle('hidden')"> Need help?</a>
+  </div>
+  <div class="setup-input-row">
+    <input class="setup-input" id="script-url-input" type="text" placeholder="https://script.google.com/macros/s/YOUR_ID/exec">
+    <button class="btn-connect" onclick="saveScriptUrl()">CONNECT</button>
+  </div>
+</div>
+<div id="setup-help" class="hidden" style="background:#07070f;border-bottom:1px solid #1a1a2e;padding:14px 24px;">
+  <div style="max-width:700px;font-size:12px;line-height:1.9;color:#7070a0;">
+    <strong style="color:var(--accent-lt);">Quick Setup (5 min)</strong><br>
+    Create a new Google Sheet → Extensions → Apps Script → paste the script from <code style="background:#12122a;padding:1px 4px;border-radius:2px;">SETUP_GUIDE.txt</code> → Deploy as Web App → Anyone can access → paste URL above.
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">PROSPECT TRACKER <span>Caldwell Territory</span></div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showPage('pipeline',this)">Pipeline</button>
+    <button class="nav-btn" onclick="showPage('list',this)">All Prospects</button>
+    <button class="nav-btn" onclick="showPage('activity',this)">Activity Feed</button>
+  </div>
+  <div class="sync-status">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-label">not connected</span>
+  </div>
+</div>
+
+<!-- ═══════ PIPELINE PAGE ═══════ -->
+<div class="page active" id="page-pipeline">
+
+  <div class="g4" style="margin-top:4px;margin-bottom:24px;">
+    <div class="card">
+      <div class="card-hd">Total Prospects</div>
+      <div class="kpi-val" id="kpi-total">0</div>
+      <div class="kpi-lbl">Active Pipeline</div>
+    </div>
+    <div class="card">
+      <div class="card-hd">Pipeline Value</div>
+      <div class="kpi-val" id="kpi-value" style="color:var(--gold)">$0</div>
+      <div class="kpi-lbl">Est. Annual Orders</div>
+    </div>
+    <div class="card">
+      <div class="card-hd">Hot Prospects</div>
+      <div class="kpi-val" id="kpi-hot" style="color:var(--red)">0</div>
+      <div class="kpi-lbl">High Interest</div>
+    </div>
+    <div class="card">
+      <div class="card-hd">Follow-ups Due</div>
+      <div class="kpi-val" id="kpi-followups" style="color:var(--amber)">0</div>
+      <div class="kpi-lbl">Past Next Action Date</div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;letter-spacing:1px;">PIPELINE VIEW</div>
+    <button class="sec-action" onclick="openProspectModal()">+ ADD PROSPECT</button>
+  </div>
+
+  <div class="pipeline" id="pipeline-board"></div>
+
+</div>
+
+<!-- ═══════ LIST PAGE ═══════ -->
+<div class="page" id="page-list">
+  <div class="sec" style="margin-top:4px;">
+    <div class="sec-title">ALL PROSPECTS</div>
+    <div class="sec-line"></div>
+    <button class="sec-action" onclick="openProspectModal()">+ ADD PROSPECT</button>
+  </div>
+  <div class="card">
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <input type="text" id="list-search" class="form-input" style="width:200px;font-size:12px;padding:5px 10px;" placeholder="Search…" oninput="renderList()">
+      <select id="list-stage" class="form-select" style="width:160px;font-size:12px;padding:5px 10px;" onchange="renderList()">
+        <option value="">All Stages</option>
+      </select>
+      <select id="list-state" class="form-select" style="width:100px;font-size:12px;padding:5px 10px;" onchange="renderList()">
+        <option value="">All States</option>
+        <option>CA</option><option>AZ</option><option>NV</option><option>NM</option>
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Prospect</th><th>Location</th><th>Stage</th><th>Interest</th>
+          <th>Products Pitched</th><th class="num">Est. Value</th>
+          <th>Last Contact</th><th>Next Action</th><th>Overdue?</th><th></th>
+        </tr></thead>
+        <tbody id="list-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ ACTIVITY PAGE ═══════ -->
+<div class="page" id="page-activity">
+  <div class="sec" style="margin-top:4px;">
+    <div class="sec-title">ACTIVITY FEED</div>
+    <div class="sec-line"></div>
+  </div>
+  <div id="activity-feed"></div>
+</div>
+
+<!-- ═══════ ADD/EDIT PROSPECT MODAL ═══════ -->
+<div class="modal-bg" id="prospect-modal">
+  <div class="modal">
+    <div class="modal-title" id="pm-title">ADD PROSPECT</div>
+    <div class="modal-sub">New account you're working on getting Caldwell into</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Business Name *</label>
+        <input type="text" class="form-input" id="pm-name" placeholder="Shop name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">City</label>
+        <input type="text" class="form-input" id="pm-city" placeholder="City">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">State</label>
+        <select class="form-select" id="pm-state">
+          <option value="">—</option><option>CA</option><option>AZ</option><option>NV</option><option>NM</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pipeline Stage</label>
+        <select class="form-select" id="pm-stage">
+          <option value="Identified">Identified</option>
+          <option value="First Contact">First Contact</option>
+          <option value="Meeting Set">Meeting Set</option>
+          <option value="Pitched">Pitched</option>
+          <option value="Closed Won">Closed Won</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Interest Level</label>
+        <select class="form-select" id="pm-interest">
+          <option>High</option><option>Medium</option><option>Low</option><option>Unknown</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Est. Annual Order Value ($)</label>
+        <input type="number" class="form-input" id="pm-value" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Caldwell Products to Pitch</label>
+      <input type="text" class="form-input" id="pm-products" placeholder="e.g. The King is Dead, Eastern Standard, Blind Man's Bluff">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Account Background Notes</label>
+      <textarea class="form-textarea" id="pm-notes" placeholder="Who's the buyer, what's their current cigar selection, how did you find them, any history…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-danger hidden" id="pm-delete" onclick="deleteProspect()">Delete</button>
+      <button class="btn-cancel" onclick="closeModal('prospect-modal')">Cancel</button>
+      <button class="btn-save" id="pm-save" onclick="saveProspect()">SAVE PROSPECT</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ CONTACT LOG MODAL ═══════ -->
+<div class="modal-bg" id="contact-modal">
+  <div class="modal">
+    <div class="modal-title">LOG CONTACT</div>
+    <div class="modal-sub" id="cm-prospect-name" style="color:var(--accent-lt);"></div>
+    <div class="form-row3">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input type="date" class="form-input" id="cm-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Type</label>
+        <select class="form-select" id="cm-type">
+          <option>In-Person Visit</option>
+          <option>Phone Call</option>
+          <option>Text Message</option>
+          <option>Email</option>
+          <option>Trade Show</option>
+          <option>Sample Drop-Off</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Update Stage?</label>
+        <select class="form-select" id="cm-stage">
+          <option value="">No change</option>
+          <option value="Identified">Identified</option>
+          <option value="First Contact">First Contact</option>
+          <option value="Meeting Set">Meeting Set</option>
+          <option value="Pitched">Pitched</option>
+          <option value="Closed Won">Closed Won</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">What happened / Outcome</label>
+      <textarea class="form-textarea" id="cm-outcome" placeholder="What was discussed, how did they respond, what's their hesitation, etc."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Next Action</label>
+        <input type="text" class="form-input" id="cm-next-action" placeholder="e.g. Follow up with samples, call Tuesday">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Next Action Date</label>
+        <input type="date" class="form-input" id="cm-next-date">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('contact-modal')">Cancel</button>
+      <button class="btn-save" id="cm-save" onclick="saveContact()">SAVE CONTACT</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROSPECT DETAIL MODAL -->
+<div class="modal-bg" id="detail-modal">
+  <div class="modal detail-modal">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <div class="modal-title" id="dm-name"></div>
+        <div id="dm-meta" style="font-family:var(--mono);font-size:11px;color:var(--ink2);margin-top:3px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <span id="dm-stage-badge"></span>
+        <span id="dm-interest-badge"></span>
+        <button class="sec-action" onclick="openContactModal(currentDetailId)">+ LOG CONTACT</button>
+        <button class="nav-btn" onclick="editProspect(currentDetailId)">Edit</button>
+      </div>
+    </div>
+
+    <div class="stage-pipe" id="dm-pipe"></div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Background Notes</div>
+      <div id="dm-notes" style="font-size:13px;color:var(--ink2);line-height:1.7;"></div>
+    </div>
+
+    <div class="detail-section">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div class="detail-section-title" style="margin:0;">Contact History</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--ink3);" id="dm-contact-count"></div>
+      </div>
+      <div class="contact-log" id="dm-contact-log"></div>
+      <div id="dm-no-contacts" class="empty" style="padding:24px;">
+        <div class="empty-icon">📞</div>
+        No contacts logged yet.
+      </div>
+      <div class="log-actions" style="margin-top:14px;">
+        <button class="btn-log" onclick="openContactModal(currentDetailId)">+ In-Person Visit</button>
+        <button class="btn-log" onclick="openContactModal(currentDetailId,'Phone Call')">+ Phone Call</button>
+        <button class="btn-log" onclick="openContactModal(currentDetailId,'Text Message')">+ Text</button>
+        <button class="btn-log" onclick="openContactModal(currentDetailId,'Email')">+ Email</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('detail-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+let SCRIPT_URL = localStorage.getItem('prospect_script_url') || '';
+
+const STAGES = ['Identified','First Contact','Meeting Set','Pitched','Closed Won'];
+const STAGE_COLORS = ['#3e3c58','#4a3fb0','#7c6af0','#d4a843','#4db87a'];
+const INTEREST_MAP = { High:'b-red', Medium:'b-amber', Low:'b-gray', Unknown:'b-gray' };
+const CONTACT_ICONS = { 'In-Person Visit':'🤝','Phone Call':'📞','Text Message':'💬','Email':'📧','Trade Show':'🎪','Sample Drop-Off':'📦' };
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let prospects = [];
+let contacts = []; // { id, prospectId, date, type, outcome, nextAction, nextDate, stageUpdate }
+let currentDetailId = null;
+let editingProspectId = null;
+let contactForProspectId = null;
+
+// ═══════════════════════════════════════
+// SETUP / SYNC
+// ═══════════════════════════════════════
+function saveScriptUrl() {
+  const url = document.getElementById('script-url-input').value.trim();
+  if (!url.startsWith('https://script.google.com')) { showToast('Invalid URL','error'); return; }
+  SCRIPT_URL = url;
+  localStorage.setItem('prospect_script_url', url);
+  document.getElementById('setup-banner').classList.add('hidden');
+  document.getElementById('setup-help').classList.add('hidden');
+  loadData();
+}
+
+function setSyncState(state, msg) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot' + (state==='ok'?' ok':state==='loading'?' loading':state==='err'?' err':'');
+  lbl.textContent = msg || {idle:'not connected',loading:'syncing…',ok:'synced',err:'sync error'}[state]||state;
+}
+
+async function loadData() {
+  if (!SCRIPT_URL) { renderAll(); return; }
+  setSyncState('loading');
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=getProspects', {
+      method: 'GET',
+      redirect: 'follow',
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch(pe) { throw new Error('Bad response — check Apps Script deployment settings'); }
+    if (data.error) throw new Error(data.error);
+    prospects = data.prospects || [];
+    contacts = data.contacts || [];
+    setSyncState('ok', 'synced ' + new Date().toLocaleTimeString());
+    renderAll();
+  } catch(e) {
+    setSyncState('err', 'sync failed');
+    showToast('Load failed: ' + e.message, 'error');
+    renderAll();
+  }
+}
+
+async function pushData(payload) {
+  if (!SCRIPT_URL) { renderAll(); showToast('Saved locally (no sync)', 'success'); return; }
+  setSyncState('loading');
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch(pe) { throw new Error('Bad response — re-deploy your Apps Script and try again'); }
+    if (data.error) throw new Error(data.error);
+    setSyncState('ok', 'synced ' + new Date().toLocaleTimeString());
+    showToast('Saved & synced ✓', 'success');
+  } catch(e) {
+    setSyncState('err', 'sync error');
+    showToast('Sync failed: ' + e.message, 'error');
+  }
+}
+
+function checkSetup() {
+  if (SCRIPT_URL) {
+    document.getElementById('setup-banner').classList.add('hidden');
+    loadData();
+  } else { setSyncState('idle'); seedDefaultData(); renderAll(); }
+}
+
+function seedDefaultData() {
+  prospects = [
+    { id:'p1', name:'Gran Reserva Lounge', city:'Glendale', state:'CA', stage:'First Contact', interest:'High', value:8000, products:'The King is Dead, Eastern Standard', notes:'Met at the store — really interested in premium cigars. Tried to set up a visit for SoCal trip week of Jan 22.' },
+    { id:'p2', name:'Liberty Cigars SD', city:'San Diego', state:'CA', stage:'Closed Won', interest:'High', value:5000, products:'Blind Man\'s Bluff, Caldwell core', notes:'Chris finally pulled the trigger. Long time coming — good relationship built over months.' },
+    { id:'p3', name:"Trevor's Liquor", city:'Phoenix', state:'AZ', stage:'Identified', interest:'High', value:12000, products:'Caldwell full line', notes:'Kyle (buyer) got fired. Need to find the new buyer ASAP — might be different buyers per location.' },
+    { id:'p4', name:'Royal Cigars San Diego', city:'San Diego', state:'CA', stage:'Identified', interest:'Unknown', value:0, products:'', notes:'On the list to contact. No outreach yet.' },
+  ];
+  contacts = [
+    { id:'c1', prospectId:'p1', date:'2026-01-09', type:'Email', outcome:'Sent intro email, suggested meeting during SoCal visit week of Jan 22.', nextAction:'Meet in person during SoCal trip', nextDate:'2026-01-22', stageUpdate:'First Contact' },
+    { id:'c2', prospectId:'p2', date:'2026-01-19', type:'In-Person Visit', outcome:'Visited with Chris. Finally got the go-ahead on a Caldwell order after months of working him.', nextAction:'Finalize order details and get PO', nextDate:'2026-01-23', stageUpdate:'Closed Won' },
+    { id:'c3', prospectId:'p3', date:'2026-01-06', type:'Phone Call', outcome:"Called to follow up — found out Kyle got fired. Store doesn't know who the new buyer is yet.", nextAction:'Call back next week to find new buyer contact', nextDate:'2026-01-13', stageUpdate:'' },
+  ];
+}
+
+// ═══════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════
+function renderAll() {
+  renderKPIs();
+  renderPipeline();
+  renderList();
+  renderActivity();
+  populateStageFilter();
+}
+
+function renderKPIs() {
+  const total = prospects.length;
+  const value = prospects.reduce((s,p)=>s+parseFloat(p.value||0),0);
+  const hot = prospects.filter(p=>p.interest==='High').length;
+  const today = new Date().toISOString().split('T')[0];
+  const overdue = prospects.filter(p => {
+    const lastContact = contacts.filter(c=>c.prospectId===p.id).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    return lastContact?.nextDate && lastContact.nextDate < today;
+  }).length;
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-value').textContent = '$' + value.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('kpi-hot').textContent = hot;
+  document.getElementById('kpi-followups').textContent = overdue;
+}
+
+function renderPipeline() {
+  const board = document.getElementById('pipeline-board');
+  board.innerHTML = STAGES.map((stage, si) => {
+    const stageProspects = prospects.filter(p => p.stage === stage);
+    return `<div class="stage-col">
+      <div class="stage-header">
+        <div class="stage-dot" style="background:${STAGE_COLORS[si]}"></div>
+        <div class="stage-name" style="color:${STAGE_COLORS[si]}">${stage}</div>
+        <div class="stage-count">${stageProspects.length}</div>
+      </div>
+      <div class="stage-cards">
+        ${stageProspects.length === 0
+          ? `<div style="font-family:var(--mono);font-size:10px;color:var(--ink3);padding:10px;text-align:center;">Empty</div>`
+          : stageProspects.map(p => renderKanbanCard(p)).join('')
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderKanbanCard(p) {
+  const lastContact = contacts.filter(c=>c.prospectId===p.id).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const today = new Date().toISOString().split('T')[0];
+  const overdue = lastContact?.nextDate && lastContact.nextDate < today;
+  return `<div class="k-card" onclick="openDetail('${p.id}')">
+    <div class="k-card-name">${p.name}</div>
+    <div class="k-card-loc">${[p.city,p.state].filter(Boolean).join(', ')}</div>
+    <div class="k-card-meta">
+      <span class="badge ${INTEREST_MAP[p.interest]||'b-gray'}">${p.interest}</span>
+      ${overdue ? '<span class="badge b-red">OVERDUE</span>' : ''}
+      ${p.value > 0 ? `<span class="k-card-val">$${parseFloat(p.value).toLocaleString('en-US',{maximumFractionDigits:0})}</span>` : ''}
+    </div>
+    ${lastContact ? `<div style="font-family:var(--mono);font-size:9px;color:var(--ink3);margin-top:8px;">${formatContactIcon(lastContact.type)} ${lastContact.type} · ${fmtDate(lastContact.date)}</div>` : '<div style="font-family:var(--mono);font-size:9px;color:var(--ink3);margin-top:8px;">No contacts logged</div>'}
+  </div>`;
+}
+
+function renderList() {
+  const search = (document.getElementById('list-search')?.value||'').toLowerCase();
+  const stage = document.getElementById('list-stage')?.value||'';
+  const state = document.getElementById('list-state')?.value||'';
+  const today = new Date().toISOString().split('T')[0];
+
+  let rows = [...prospects];
+  if (search) rows = rows.filter(p=>p.name.toLowerCase().includes(search)||(p.city||'').toLowerCase().includes(search));
+  if (stage) rows = rows.filter(p=>p.stage===stage);
+  if (state) rows = rows.filter(p=>p.state===state);
+
+  const tbody = document.getElementById('list-tbody');
+  tbody.innerHTML = rows.map(p => {
+    const lastContact = contacts.filter(c=>c.prospectId===p.id).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    const overdue = lastContact?.nextDate && lastContact.nextDate < today;
+    const stageIdx = STAGES.indexOf(p.stage);
+    return `<tr onclick="openDetail('${p.id}')" style="cursor:pointer;">
+      <td><div style="font-weight:500;">${p.name}</div></td>
+      <td class="muted" style="font-family:var(--mono);font-size:11px;">${[p.city,p.state].filter(Boolean).join(', ')}</td>
+      <td><span class="badge" style="background:${STAGE_COLORS[stageIdx]}22;color:${STAGE_COLORS[stageIdx]};border:1px solid ${STAGE_COLORS[stageIdx]}55;">${p.stage}</span></td>
+      <td><span class="badge ${INTEREST_MAP[p.interest]||'b-gray'}">${p.interest}</span></td>
+      <td style="font-size:12px;color:var(--ink2);max-width:160px;">${p.products||'—'}</td>
+      <td class="num">${p.value>0?'$'+parseFloat(p.value).toLocaleString('en-US',{maximumFractionDigits:0}):'—'}</td>
+      <td style="font-family:var(--mono);font-size:10px;color:var(--ink2);">${lastContact?`${formatContactIcon(lastContact.type)} ${fmtDate(lastContact.date)}`:'—'}</td>
+      <td style="font-size:12px;color:${overdue?'var(--red)':'var(--ink2)'};">${lastContact?.nextAction||'—'}</td>
+      <td>${overdue?'<span class="badge b-red">OVERDUE</span>':''}</td>
+      <td><button onclick="event.stopPropagation();openContactModal('${p.id}')" class="btn-log" style="font-size:10px;padding:3px 8px;">+ Log</button></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--ink3);font-family:var(--mono);font-size:12px;">No prospects found</td></tr>`;
+}
+
+function renderActivity() {
+  const feed = document.getElementById('activity-feed');
+  const allContacts = [...contacts].sort((a,b) => b.date.localeCompare(a.date));
+  if (allContacts.length === 0) { feed.innerHTML = `<div class="empty"><div class="empty-icon">📋</div>No activity yet. Start logging contacts to see them here.</div>`; return; }
+  feed.innerHTML = allContacts.map(c => {
+    const p = prospects.find(pr=>pr.id===c.prospectId);
+    return `<div style="display:grid;grid-template-columns:auto 1fr;gap:14px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:4px;margin-bottom:10px;">
+      <div style="text-align:center;min-width:36px;">
+        <div style="font-size:18px;">${CONTACT_ICONS[c.type]||'📌'}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--ink3);margin-top:4px;">${fmtDate(c.date)}</div>
+      </div>
+      <div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:5px;">
+          <span style="font-weight:600;font-size:14px;cursor:pointer;color:var(--accent-lt);" onclick="openDetail('${c.prospectId}')">${p?.name||'Unknown'}</span>
+          <span class="badge b-gray">${c.type}</span>
+          ${c.stageUpdate?`<span class="badge b-purple">→ ${c.stageUpdate}</span>`:''}
+        </div>
+        <div style="font-size:13px;color:var(--ink2);line-height:1.6;">${c.outcome||'—'}</div>
+        ${c.nextAction?`<div style="font-size:11px;color:var(--accent-lt);margin-top:6px;font-style:italic;">→ Next: ${c.nextAction}${c.nextDate?' ('+fmtDate(c.nextDate)+')':''}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function populateStageFilter() {
+  const sel = document.getElementById('list-stage');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">All Stages</option>' + STAGES.map(s=>`<option value="${s}">${s}</option>`).join('');
+}
+
+// ═══════════════════════════════════════
+// PROSPECT MODAL
+// ═══════════════════════════════════════
+function openProspectModal(id) {
+  editingProspectId = id || null;
+  const p = id ? prospects.find(pr=>pr.id===id) : null;
+  document.getElementById('pm-title').textContent = p ? 'EDIT PROSPECT' : 'ADD PROSPECT';
+  document.getElementById('pm-name').value = p?.name||'';
+  document.getElementById('pm-city').value = p?.city||'';
+  document.getElementById('pm-state').value = p?.state||'';
+  document.getElementById('pm-stage').value = p?.stage||'Identified';
+  document.getElementById('pm-interest').value = p?.interest||'Unknown';
+  document.getElementById('pm-value').value = p?.value||'';
+  document.getElementById('pm-products').value = p?.products||'';
+  document.getElementById('pm-notes').value = p?.notes||'';
+  document.getElementById('pm-delete').classList.toggle('hidden', !p);
+  document.getElementById('prospect-modal').classList.add('open');
+}
+
+async function saveProspect() {
+  const name = document.getElementById('pm-name').value.trim();
+  if (!name) { showToast('Business name is required','error'); return; }
+  const btn = document.getElementById('pm-save');
+  btn.disabled=true; btn.textContent='Saving…';
+
+  const data = {
+    id: editingProspectId || Date.now().toString(),
+    name, city:document.getElementById('pm-city').value,
+    state:document.getElementById('pm-state').value,
+    stage:document.getElementById('pm-stage').value,
+    interest:document.getElementById('pm-interest').value,
+    value:parseFloat(document.getElementById('pm-value').value)||0,
+    products:document.getElementById('pm-products').value,
+    notes:document.getElementById('pm-notes').value,
+  };
+
+  if (editingProspectId) {
+    const idx = prospects.findIndex(p=>p.id===editingProspectId);
+    prospects[idx] = data;
+  } else { prospects.push(data); }
+
+  closeModal('prospect-modal');
+  await pushData({ action:'saveProspect', prospect:data });
+  renderAll();
+  btn.disabled=false; btn.textContent='SAVE PROSPECT';
+}
+
+async function deleteProspect() {
+  if (!confirm('Delete this prospect and all their contact history?')) return;
+  prospects = prospects.filter(p=>p.id!==editingProspectId);
+  contacts = contacts.filter(c=>c.prospectId!==editingProspectId);
+  closeModal('prospect-modal');
+  closeModal('detail-modal');
+  await pushData({ action:'deleteProspect', id:editingProspectId });
+  renderAll();
+}
+
+// ═══════════════════════════════════════
+// CONTACT MODAL
+// ═══════════════════════════════════════
+function openContactModal(prospectId, type) {
+  contactForProspectId = prospectId;
+  const p = prospects.find(pr=>pr.id===prospectId);
+  document.getElementById('cm-prospect-name').textContent = p?.name||'';
+  document.getElementById('cm-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('cm-type').value = type || 'In-Person Visit';
+  document.getElementById('cm-stage').value = '';
+  document.getElementById('cm-outcome').value = '';
+  document.getElementById('cm-next-action').value = '';
+  document.getElementById('cm-next-date').value = '';
+  document.getElementById('contact-modal').classList.add('open');
+}
+
+async function saveContact() {
+  const outcome = document.getElementById('cm-outcome').value.trim();
+  if (!outcome) { showToast('Please describe what happened','error'); return; }
+  const btn = document.getElementById('cm-save');
+  btn.disabled=true; btn.textContent='Saving…';
+
+  const stageUpdate = document.getElementById('cm-stage').value;
+  const contact = {
+    id: Date.now().toString(),
+    prospectId: contactForProspectId,
+    date: document.getElementById('cm-date').value,
+    type: document.getElementById('cm-type').value,
+    outcome, stageUpdate,
+    nextAction: document.getElementById('cm-next-action').value,
+    nextDate: document.getElementById('cm-next-date').value,
+  };
+
+  if (stageUpdate) {
+    const pIdx = prospects.findIndex(p=>p.id===contactForProspectId);
+    if (pIdx >= 0) prospects[pIdx].stage = stageUpdate;
+  }
+  contacts.push(contact);
+
+  closeModal('contact-modal');
+  await pushData({ action:'saveContact', contact, stageUpdate: stageUpdate ? {prospectId:contactForProspectId, stage:stageUpdate} : null });
+  renderAll();
+  if (currentDetailId === contactForProspectId) openDetail(currentDetailId);
+  btn.disabled=false; btn.textContent='SAVE CONTACT';
+}
+
+// ═══════════════════════════════════════
+// DETAIL MODAL
+// ═══════════════════════════════════════
+function openDetail(id) {
+  currentDetailId = id;
+  const p = prospects.find(pr=>pr.id===id);
+  if (!p) return;
+  const pContacts = contacts.filter(c=>c.prospectId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const stageIdx = STAGES.indexOf(p.stage);
+  const today = new Date().toISOString().split('T')[0];
+
+  document.getElementById('dm-name').textContent = p.name;
+  document.getElementById('dm-meta').textContent = [p.city, p.state, p.value>0?'Est. $'+parseFloat(p.value).toLocaleString('en-US',{maximumFractionDigits:0})+'/yr':null, p.products||null].filter(Boolean).join(' · ');
+  document.getElementById('dm-stage-badge').innerHTML = `<span class="badge" style="background:${STAGE_COLORS[stageIdx]}22;color:${STAGE_COLORS[stageIdx]};border:1px solid ${STAGE_COLORS[stageIdx]}55;">${p.stage}</span>`;
+  document.getElementById('dm-interest-badge').innerHTML = `<span class="badge ${INTEREST_MAP[p.interest]||'b-gray'}">${p.interest}</span>`;
+  document.getElementById('dm-notes').textContent = p.notes || 'No background notes added yet.';
+  document.getElementById('dm-pipe').innerHTML = STAGES.map((s,i) =>
+    `<div class="stage-pip ${i<stageIdx?'done':i===stageIdx?'current':''}" title="${s}"></div>`
+  ).join('');
+  document.getElementById('dm-contact-count').textContent = `${pContacts.length} contacts`;
+
+  const logEl = document.getElementById('dm-contact-log');
+  const noEl = document.getElementById('dm-no-contacts');
+  if (pContacts.length === 0) { logEl.innerHTML=''; noEl.classList.remove('hidden'); }
+  else {
+    noEl.classList.add('hidden');
+    logEl.innerHTML = pContacts.map(c => {
+      const overdue = c.nextDate && c.nextDate < today;
+      return `<div class="contact-entry">
+        <div class="contact-icon">${CONTACT_ICONS[c.type]||'📌'}</div>
+        <div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;flex-wrap:wrap;">
+            <span class="badge b-gray">${c.type}</span>
+            <span class="contact-date">${fmtDate(c.date)}</span>
+            ${c.stageUpdate?`<span class="badge b-purple">→ ${c.stageUpdate}</span>`:''}
+          </div>
+          <div class="contact-outcome">${c.outcome||'—'}</div>
+          ${c.nextAction?`<div class="contact-next" style="color:${overdue?'var(--red)':'var(--accent-lt)'}">→ Next: ${c.nextAction}${c.nextDate?' ('+fmtDate(c.nextDate)+')':''}${overdue?' ⚠ OVERDUE':''}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function editProspect(id) {
+  closeModal('detail-modal');
+  openProspectModal(id);
+}
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr + 'T12:00:00');
+  if (isNaN(d)) return dateStr;
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] + ' ' + d.getDate();
+}
+
+function formatContactIcon(type) { return CONTACT_ICONS[type]||'📌'; }
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.topbar .nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+(type||'');
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// Close modals on backdrop click
+['prospect-modal','contact-modal','detail-modal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) closeModal(id);
+  });
+});
+
+// INIT
+checkSetup();
+</script>
+</body>
+</html>
